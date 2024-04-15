@@ -16,3 +16,46 @@
 #    pipelines:
 #      traces:
 #        exporters: [spanmetrics, otlphttp/example]
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+  postgresql:
+    endpoint: uptrace_postgres:5432
+    transport: tcp
+    username: uptrace
+    password: uptrace
+    databases:
+      - uptrace
+    tls:
+      insecure: true
+
+exporters:
+  otlp/uptrace:
+    endpoint: "uptrace:14317"
+    #endpoint: "otlp.uptrace.dev:4317"
+    tls:
+      insecure: true
+    headers:
+      uptrace-dsn: "http://project2_secret_token@localhost:14317/2"
+  logging:
+
+processors:
+  batch:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, otlp/uptrace]
+    metrics:
+      receivers: [otlp, postgresql]
+      processors: [batch]
+      exporters: [logging, otlp/uptrace]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, otlp/uptrace]
